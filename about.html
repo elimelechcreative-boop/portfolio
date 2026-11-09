@@ -1,0 +1,698 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><script>if(location.hash==="#enter")document.documentElement.classList.add("entering")</script><style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* ── page transition: the About node scales up to fill the screen ── */
+.zoomer{position:fixed; z-index:100; margin:0; pointer-events:none; overflow:hidden; border-radius:18px; border:1px solid var(--c-about);
+  background:linear-gradient(180deg, color-mix(in srgb, var(--c-about) 10%, var(--node-solid)), var(--node-solid) 55%);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--c-about) 40%,transparent), 0 0 80px color-mix(in srgb,var(--c-about) 30%,transparent); transform-origin:0 0; will-change:transform}
+.zoomer .zin{position:absolute; inset:0; transform-origin:0 0}
+.zoomer .zin > .node{position:absolute!important; left:0!important; top:0!important; animation:none!important; margin:0; border:0; box-shadow:none; background:none}
+#wires.intro .pulse{opacity:0}
+
+/* ── light canvas: the About page's canvas is white with light-blue dots; the sidebar stays as on Home ── */
+.canvas{--canvas:#F2F4F7; --node:#FFFFFF; --node-solid:#FFFFFF; --tile:#F3F6FA; --ink:#14171F; --muted:#5A6172; --line:#DCE3EE; --wire:#B7C2D3; --chip:#F1F4F9; --shadow:rgba(30,50,90,.07); --stroke:#D3DCE8;
+  color:var(--ink); color-scheme:light}
+main.canvas{background:#F2F4F7}
+/* one wire colour: wires, pulses and ports share the dots' blue instead of each section's colour */
+.canvas{--wire-c:#5AA9F5}
+.canvas .wire{stroke:#C3D3E6} .canvas .wire.hot{stroke:var(--wire-c)} .canvas .pulse{fill:var(--wire-c)}
+.canvas .port{background:var(--wire-c); box-shadow:0 0 8px color-mix(in srgb,var(--wire-c) 50%,transparent)}
+
+.canvas .node{background:var(--node-solid); border:1px solid var(--stroke)}
+.canvas .node:hover, .canvas .node.dragging{border-color:var(--stroke)}
+.canvas .ph.portrait::after{box-shadow:inset 0 0 0 1px rgba(20,30,60,.06)}
+.canvas .zoom .grp{color:var(--ink)}
+.canvas .chips li{border-color:var(--stroke)}
+.canvas .more-link{color:color-mix(in srgb,var(--c) 72%,#000); border-color:color-mix(in srgb,var(--c) 55%,transparent)}
+.canvas .more-link:hover{color:#fff; background:color-mix(in srgb,var(--c) 80%,#000)}
+@media (max-width:900px){ main.canvas{background:radial-gradient(circle at 1px 1px, rgba(120,195,255,.7) 1px, transparent 0) 0 0/24px 24px, #F2F4F7!important} }
+
+html.entering .world{opacity:0}
+.canvas::after{content:""; position:absolute; inset:0; background:#F2F4F7; opacity:0; pointer-events:none; z-index:50; transition:opacity .7s cubic-bezier(.33,0,.2,1)}
+html.entering .canvas::after{opacity:1; transition:none}
+.zoomer .scan{position:absolute; left:0; right:0; height:2px; top:0; background:linear-gradient(90deg,transparent,var(--c-about),transparent); opacity:0}
+@media (max-width:900px){ .side .who nav.pages{padding:4px; background:var(--tile); border:1px solid var(--line)} }
+/* the current page or node lights up in the outline */
+.outline button[aria-current="true"]{background:color-mix(in srgb,var(--c) 15%,var(--tile)); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 50%,transparent)}
+.outline button[aria-current="true"] .dot{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 28%,transparent), 0 0 12px 2px var(--c)}
+.pages .home-link{display:flex; align-items:center; justify-content:center; gap:8px; color:var(--ink)}
+</style></head><body>
+<title>About Elimelech Adga</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a node editor. Fixed sidebar (identity, tools, outline, contact) beside a pannable, zoomable canvas where content lives in nodes wired out of the About hub. */
+:root{
+  --side:#111215; --canvas:#0A0B0D; --node:rgba(19,20,24,.9); --node-solid:#141519; --tile:#17181C;
+  --ink:#F1F2F4; --muted:#9C9FA8; --line:#26282E; --wire:#6B6F78; --chip:#1D1F24; --shadow:rgba(0,0,0,.45);
+  --c-about:#6F8DFF; --c-work:#8B5CF6; --c-proj:#FF6B3D; --c-edu:#2BD46A; --c-skills:#F2B630; --c-contact:#F472B6; --c-press:#22D3EE;
+  --f-ui:"Geist", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --ease:cubic-bezier(.16,1,.3,1); --pop:cubic-bezier(.34,1.56,.64,1);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--canvas); color:var(--ink); font-family:var(--f-ui); font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--c-about); outline-offset:2px; border-radius:6px}
+.mono{font-family:var(--f-mono)}
+
+.app{display:grid; grid-template-columns:250px minmax(0,1fr); height:100%}
+
+/* ── sidebar ── */
+.side{background:linear-gradient(180deg,#141519,#0F1013); border-right:1px solid var(--line); padding:32px 18px 28px 38px; overflow-y:auto; display:flex; flex-direction:column; gap:28px}
+.who{padding-bottom:20px; border-bottom:1px solid var(--line)}
+.pages{display:flex; gap:4px; margin-top:18px; padding:4px; background:var(--tile); border:1px solid var(--line); border-radius:10px}
+.pages a{flex:1; text-align:center; text-decoration:none; font-size:13px; padding:7px 8px; border-radius:7px; color:var(--muted); transition:background .2s,color .2s}
+.pages a:hover{color:var(--ink)}
+.pages a[aria-current="page"]{background:var(--chip); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line)}
+.who h1{font-size:32px; font-weight:600; letter-spacing:-.025em; margin:0 0 4px; line-height:1.1}
+.who p{margin:0; color:color-mix(in srgb,var(--ink) 85%,transparent); font-size:16px; line-height:1.3; letter-spacing:.005em}
+.label{font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); margin:0 0 12px}
+.tools{display:grid; grid-template-columns:repeat(3,56px); gap:12px 12px; padding:0; margin:0; list-style:none}
+.tools li{background:var(--tile); border:1px solid var(--line); border-radius:8px; padding:9px 0 6px; font-size:9.5px; white-space:nowrap; letter-spacing:-.01em; display:flex; flex-direction:column; align-items:center; gap:6px; font-size:11px; text-align:center; box-shadow:0 1px 0 var(--shadow); transition:transform .3s var(--pop)}
+.tools li:hover{transform:translateY(-2px)}
+.ic{width:32px; height:32px; border-radius:6px; display:grid; place-items:center; font-weight:700; font-size:14px; letter-spacing:-.02em; background:var(--b,#16171a); color:var(--f,#fff); font-family:var(--f-ui)}
+.ic.sm{font-size:11px}
+.ic.lg{background:#fff; color:#0d0d0d; box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+.ic.lg svg{width:19px; height:19px; display:block}
+.tools li{white-space:normal; padding-left:4px; padding-right:4px; line-height:1.15; justify-content:flex-start}
+.rule{border:0; border-top:1px solid var(--line); margin:4px 0 0}
+.outline{display:flex; flex-direction:column; gap:8px; padding:0; margin:0; list-style:none}
+.outline button{width:100%; display:flex; align-items:center; gap:16px; background:var(--tile); border:0; border-radius:6px; padding:9px 14px 9px 16px; font-size:14px; cursor:pointer; text-align:left; box-shadow:0 1px 0 var(--shadow); transition:transform .3s var(--pop)}
+.outline button:hover{transform:translateX(3px)}
+.outline .dot{width:11px; height:11px; border-radius:50%; background:var(--c); flex:none}
+.outline .go{margin-left:auto; opacity:0; transform:translateX(-6px); transition:.3s var(--ease)}
+.outline button[aria-current="true"] .go, .outline button:hover .go{opacity:1; transform:none}
+
+.contact .label{text-transform:none; letter-spacing:0; font-size:14px}
+.contact .row{display:flex; gap:22px; align-items:center}
+.contact a{color:var(--muted); display:grid; place-items:center; width:24px; height:24px; transition:color .2s}
+.contact a:hover{color:var(--ink)}
+.contact svg{width:22px; height:22px}
+.who .soc{display:flex; gap:20px; align-items:center; margin-top:18px}
+.who .soc a{color:var(--muted); display:grid; place-items:center; width:24px; height:24px; transition:color .2s}
+.who .soc a:hover{color:var(--ink)}
+.who .soc svg{width:21px; height:21px}
+
+/* ── canvas ── */
+.canvas{position:relative; overflow:hidden; cursor:grab; background:
+  radial-gradient(90% 70% at 55% 35%, #121318, var(--canvas));
+  touch-action:none; user-select:none; -webkit-user-select:none}
+.canvas.panning{cursor:grabbing}
+#dots{position:absolute; inset:0; width:100%; height:100%; pointer-events:none}
+.world{position:absolute; left:0; top:0; width:1440px; height:1120px; transform-origin:0 0}
+.world.glide{transition:transform .7s var(--ease)}
+#wires{position:absolute; left:0; top:0; width:1px; height:1px; overflow:visible; pointer-events:none}
+.wire{fill:none; stroke:var(--wire); stroke-width:1.4; transition:stroke .3s, stroke-width .3s}
+.wire.hot{stroke:var(--c); stroke-width:2.4}
+.pulse{fill:var(--c); opacity:.9}
+
+.zoom{position:absolute; top:24px; right:28px; display:flex; gap:16px; z-index:5}
+.zoom .grp{display:flex; align-items:center; background:var(--node-solid); border:1px solid var(--line); border-radius:10px; box-shadow:0 2px 8px var(--shadow)}
+.zoom button{background:none; border:0; width:44px; height:40px; cursor:pointer; font-size:18px; display:grid; place-items:center; border-radius:10px}
+.zoom button:hover{background:var(--chip)}
+.zoom output{min-width:56px; text-align:center; font-size:14px; font-variant-numeric:tabular-nums}
+.hint{position:absolute; left:24px; bottom:18px; font-size:12px; color:var(--muted); z-index:5; pointer-events:none; background:color-mix(in srgb,var(--node-solid) 88%,transparent); border:1px solid var(--line); border-radius:999px; padding:6px 12px; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px)}
+
+/* ── nodes ── */
+.node{position:absolute; background:linear-gradient(180deg, color-mix(in srgb, var(--c) 6%, var(--node-solid)), var(--node-solid) 40%); border:1px solid color-mix(in srgb, var(--c) 55%, transparent); border-radius:18px; padding:18px 20px 20px; box-shadow:0 1px 2px var(--shadow), 0 12px 32px var(--shadow); cursor:grab;
+  animation:pop .8s var(--pop) both; animation-delay:var(--d,0s); transition:box-shadow .3s, border-color .3s}
+.node.dragging{cursor:grabbing; box-shadow:0 2px 4px var(--shadow), 0 24px 48px var(--shadow); z-index:3}
+.node.flash, .node:hover{border-color:var(--c); box-shadow:0 0 0 4px color-mix(in srgb, var(--c) 18%, transparent), 0 0 40px color-mix(in srgb, var(--c) 18%, transparent), 0 12px 32px var(--shadow)}
+@keyframes pop{from{opacity:0; transform:translateY(14px) scale(.96)}}
+.nh{display:flex; align-items:center; gap:14px; font-size:14px; letter-spacing:.045em; text-transform:uppercase; margin-bottom:12px}
+.nh .n{font-family:var(--f-mono); letter-spacing:0; color:var(--muted)}
+.nh .more{margin-left:auto; display:flex; gap:3px}
+.nh .more i{width:4px; height:4px; border-radius:50%; background:var(--ink)}
+.port{position:absolute; width:14px; height:14px; border-radius:50%; background:var(--c); border:2.5px solid var(--node-solid); z-index:2}
+.port.top{top:-7px; left:calc(50% - 7px)}
+.port.left{left:-7px; top:98px}
+.port.out{bottom:-7px; left:calc(50% - 7px); box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 50%,transparent), 0 0 10px var(--c)}
+.port{box-shadow:0 0 10px color-mix(in srgb,var(--c) 70%,transparent)}
+
+.ph{border-radius:12px; position:relative; overflow:hidden; background:
+  radial-gradient(70% 90% at 25% 20%, color-mix(in srgb, var(--c) 55%, transparent), transparent 70%),
+  radial-gradient(60% 80% at 85% 90%, color-mix(in srgb, var(--c) 30%, var(--chip)), transparent 75%), var(--chip)}
+.ph > span{position:absolute; left:10px; bottom:8px; font-family:var(--f-mono); font-size:10.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted)}
+.arrow{width:44px; height:44px; border-radius:50%; border:1px solid var(--line); background:var(--node-solid); display:grid; place-items:center; margin-top:16px; text-decoration:none; transition:transform .35s var(--pop), background .2s, color .2s}
+.arrow:hover{transform:scale(1.08); background:var(--c); border-color:var(--c); color:#0A0B0D}
+.arrow svg{width:16px; height:16px}
+.node h3{font-size:17px; font-weight:600; line-height:1.3; margin:14px 0 6px}
+.node p{margin:0; color:var(--muted); font-size:15.5px; line-height:1.45}
+
+#about{width:780px; --c:var(--c-about)}
+#about .cols{display:grid; grid-template-columns:minmax(0,1fr) 420px; gap:22px}
+#about .nh{color:var(--c-about); margin-bottom:10px}
+#about .nh .more{position:absolute; right:22px; top:22px}
+#about .nh .n{color:var(--c-about)}
+#about h2{font-size:46px; font-weight:600; letter-spacing:-.035em; line-height:1; margin:10px 0 10px}
+#about .role{font-size:19px; font-weight:500; line-height:1.2; margin:0 0 14px; color:var(--ink)}
+#about .ph{height:360px; margin-top:22px}
+.ph.portrait img{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:55% 30%; display:block}
+.ph.portrait::after{content:""; position:absolute; inset:0; border-radius:inherit; box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.hubrow{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap}
+.hubrow .chips{margin-top:18px}
+.more-link{display:inline-flex; align-items:center; gap:8px; text-decoration:none; font-size:14px; font-weight:500; color:var(--c); padding:8px 14px; border:1px solid color-mix(in srgb,var(--c) 45%,transparent); border-radius:999px; transition:background .2s,color .2s}
+.more-link:hover{background:var(--c); color:#0A0B0D}
+.chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; padding:0; list-style:none}
+.chips li{border:1px solid #33363D; border-radius:999px; padding:5px 12px; font-size:14px; background:var(--chip)}
+#work{width:340px; --c:var(--c-work)} #work .ph{height:135px}
+#work .when{font-size:14.5px; margin-top:2px}
+.bul{margin:10px 0 0; padding-left:18px; color:var(--muted); font-size:15px; line-height:1.45; display:flex; flex-direction:column; gap:6px}
+.bul li::marker{color:var(--c)}
+.chips.sm{margin-top:14px; gap:6px}
+.chips.sm li{font-size:13px; padding:4px 11px}
+#projects{width:302px; --c:var(--c-proj)} #projects .ph{height:132px}
+#edu{width:322px; --c:var(--c-edu)} #edu .ph{height:135px}
+.ph.flow svg{position:absolute; inset:0; width:100%; height:100%}
+.flow .fl{fill:none; stroke:color-mix(in srgb,var(--c) 70%,transparent); stroke-width:1.4; stroke-dasharray:4 4; animation:flowdash 1.2s linear infinite}
+@keyframes flowdash{to{stroke-dashoffset:-16}}
+.flow .fb rect{fill:var(--node-solid); stroke:color-mix(in srgb,var(--c) 45%,var(--line))}
+.flow .fb.hot rect{stroke:var(--c); fill:color-mix(in srgb,var(--c) 14%,var(--node-solid))}
+.flow .fb text{fill:var(--ink); font:500 10px var(--f-mono); text-anchor:middle}
+.flow .fe{fill:var(--c)}
+#edu h3{margin-bottom:2px} #edu h3 + p{margin-bottom:10px}
+#skills{width:252px; --c:var(--c-skills)}
+#skills .ph.phone{aspect-ratio:9/16; height:auto; max-width:100%; border-radius:16px; border:1px solid color-mix(in srgb,var(--c) 35%,var(--line))}
+.phone .ui{position:absolute; inset:0; pointer-events:none}
+.phone .bar{position:absolute; left:12px; right:12px; top:12px; height:2px; border-radius:2px; background:rgba(255,255,255,.18); overflow:hidden}
+.phone .bar i{display:block; height:100%; width:38%; background:#fff; animation:prog 6s linear infinite}
+@keyframes prog{from{width:0}to{width:100%}}
+.phone .rail{position:absolute; right:10px; bottom:64px; display:flex; flex-direction:column; gap:14px}
+.phone .rail i{width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.22)}
+.phone .cap{position:absolute; left:12px; right:52px; bottom:36px; display:flex; flex-direction:column; gap:6px}
+.phone .cap b{font-size:12px; color:#fff; font-weight:600}
+.phone .cap i{height:6px; border-radius:3px; background:rgba(255,255,255,.22)}
+.phone .cap i + i{width:70%}
+.phone.has-video video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block}
+.phone.has-video .bar i{animation:none; width:0; transition:width .25s linear}
+.phone .ratio{text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.snd{position:absolute; right:10px; bottom:10px; width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,.3); background:rgba(10,11,13,.55); color:#fff; display:grid; place-items:center; cursor:pointer; backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:2}
+.snd svg{width:17px; height:17px} .snd .w{display:none} .snd[aria-pressed="true"] .w{display:inline} .snd[aria-pressed="true"] .x{display:none}
+.phone .ratio{position:absolute; left:12px; top:22px; font-family:var(--f-mono); font-size:10.5px; color:rgba(255,255,255,.7)}
+
+/* ── phone & tablet: sidebar on top, nodes as a wired pipeline ── */
+@media (max-width:900px){
+  html,body{height:auto}
+  .app{display:block}
+  .side{padding:28px 16px; gap:22px}
+  .tools{grid-template-columns:repeat(5,minmax(0,1fr))}
+  .contact{margin-top:0}
+  #dots{display:none}
+  .canvas{background:radial-gradient(circle at 1px 1px, rgba(255,255,255,.09) 1px, transparent 0) 0 0/24px 24px, var(--canvas)!important; overflow:visible; cursor:auto; touch-action:auto; user-select:auto; -webkit-user-select:auto}
+  .world{position:relative; width:auto; height:auto; transform:none!important; display:flex; flex-direction:column; gap:44px; padding:40px 16px 56px}
+  .node{position:relative; left:auto!important; top:auto!important; width:auto!important; cursor:auto}
+  #about .cols{grid-template-columns:minmax(0,1fr)}
+  #about .ph{margin-top:0; height:auto; aspect-ratio:4/5; order:-1}
+  #about h2{font-size:40px}
+  #skills .ph.phone{width:min(100%,280px); margin-inline:auto}
+  .port.left{left:calc(50% - 7px); top:-7px}
+  .zoom,.hint{display:none}
+}
+@media (max-width:520px){ .tools{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important; transition:none!important}
+  .pulse{display:none}
+}
+.toolbox{margin-top:auto; padding-top:22px; border-top:1px solid var(--line)}
+.contact{padding-top:22px; border-top:1px solid var(--line)}
+@media (max-width:900px){
+  .app{display:flex; flex-direction:column}
+  .side{display:contents}
+  .who{order:1; padding:28px 16px 18px; background:var(--side)}
+  .side nav{order:2; padding:0 16px 24px; background:var(--side); border-bottom:1px solid var(--line)}
+  .canvas{order:3}
+  .toolbox{order:4; margin:0; padding:28px 16px 24px}
+  .contact{order:5; padding:22px 16px 32px}
+}
+
+/* ── about page ── */
+@media (min-width:901px){ .world{width:1560px; height:1440px} }
+#profile{width:1520px; --c:var(--c-about)}
+#profile .pcols{display:grid; grid-template-columns:340px minmax(0,1fr); gap:48px; align-items:stretch}
+#profile .pcols > div:last-child{display:flex; flex-direction:column; padding:6px 24px 4px 0}
+#profile .ph{height:auto; aspect-ratio:4/5; margin:0}
+#profile .nh{color:var(--c-about); margin-bottom:0} #profile .nh .n{color:var(--c-about)}
+#profile h2{font-size:76px; font-weight:600; letter-spacing:-.04em; line-height:.95; margin:22px 0 18px}
+#profile .lead{color:var(--ink); font-size:24px; font-weight:450; letter-spacing:-.01em; max-width:780px; line-height:1.35; margin:0}
+#profile .pbody{display:grid; grid-template-columns:1fr 1fr; gap:40px; max-width:1040px; margin-top:auto; padding-top:24px; border-top:1px solid var(--line)}
+#profile .pbody p{margin:0; font-size:16px; line-height:1.6; color:var(--muted)}
+#profile .chips{margin-top:20px}
+#exp{width:420px; --c:var(--c-work)}
+.tl{list-style:none; margin:4px 0 0; padding:0 0 0 18px; border-left:1px solid color-mix(in srgb,var(--c) 40%,var(--line)); display:flex; flex-direction:column; gap:18px}
+.tl > li{position:relative}
+.tl > li::before{content:""; position:absolute; left:-23px; top:6px; width:9px; height:9px; border-radius:50%; background:var(--c); box-shadow:0 0 8px var(--c)}
+.tl-h{display:flex; justify-content:space-between; align-items:baseline; gap:12px}
+.tl-h b{font-size:16px; font-weight:600}
+.tl-h span{font-family:var(--f-mono); font-size:12.5px; color:var(--muted); white-space:nowrap}
+.tl .role{font-size:15px; color:color-mix(in srgb,var(--ink) 80%,transparent); margin-top:2px}
+.tl .bul{margin-top:6px}
+#toolkit{width:390px; --c:var(--c-proj)}
+.kit{margin:0; display:flex; flex-direction:column; gap:14px}
+.kit dt{font-family:var(--f-mono); font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.kit dd{margin:0} .kit .chips.sm{margin-top:7px}
+#edu{width:300px; --c:var(--c-edu)}
+.ed + .ed{margin-top:14px; padding-top:14px; border-top:1px solid var(--line)}
+.ed h3{margin-top:0}
+#recog{width:290px; --c:var(--c-skills)} #recog .ph{height:150px}
+#contact{width:300px; --c:var(--c-contact)}
+#press{width:290px; --c:var(--c-press)} #press .ph{height:150px}
+#press .meta{font-family:'Geist Mono',monospace; font-size:12.5px; letter-spacing:.04em; color:color-mix(in srgb,var(--ink) 55%,transparent); margin:2px 0 8px}
+.cta{font-size:22px!important; font-weight:600; letter-spacing:-.02em; line-height:1.15; margin:0 0 14px!important}
+.clist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px}
+.clist li{display:flex; flex-direction:column; gap:3px}
+.clist span{font-family:var(--f-mono); font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted)}
+.clist a{text-decoration:none; font-size:15.5px} .clist a:hover{color:var(--c)}
+.clist .copy{all:unset; cursor:pointer; font-size:15.5px; overflow-wrap:anywhere} .clist .copy:hover{color:var(--c)}
+.clist .copy:focus-visible{outline:2px solid var(--c); outline-offset:2px}
+@media (max-width:900px){
+  #profile .pcols{grid-template-columns:minmax(0,1fr)}
+  #profile .pbody{grid-template-columns:minmax(0,1fr); gap:10px; margin-top:18px}
+  #profile .pcols > div:last-child{padding:0}
+  #profile h2{font-size:48px}
+  #profile .lead{font-size:19px}
+  #profile .ph{max-width:340px}
+}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <div class="who">
+      <h1>Elimelech</h1>
+      <p>Creative Motion Designer<br>&amp; AI Specialist</p>
+      <div class="soc">
+        <a href="mailto:elimelech.creative@gmail.com" aria-label="Email elimelech.creative@gmail.com" title="elimelech.creative@gmail.com"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6l8.5 7 8.5-7"/></svg></a>
+        <a href="https://www.linkedin.com/in/elimelech-adga/" target="_blank" rel="noopener" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4 9h3.4v11H4zM5.7 3.5a2 2 0 110 4 2 2 0 010-4zM9.6 9h3.3v1.5h.05c.46-.87 1.6-1.8 3.3-1.8 3.5 0 4.15 2.3 4.15 5.3V20H17v-5.3c0-1.27-.02-2.9-1.77-2.9-1.77 0-2.04 1.38-2.04 2.8V20H9.6z"/></svg></a>
+        <a href="https://elimelechadga.com" target="_blank" rel="noopener" aria-label="Website"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.6 3.8 5.6 3.8 9s-1.2 6.4-3.8 9c-2.6-2.6-3.8-5.6-3.8-9S9.4 5.6 12 3z"/></svg></a>
+        <a href="https://www.youtube.com/@%D7%90%D7%9C%D7%99%D7%9E%D7%9C%D7%9A%D7%90%D7%93%D7%92%D7%94" target="_blank" rel="noopener" aria-label="YouTube"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 7.2a2.5 2.5 0 00-1.76-1.77C18.27 5 12 5 12 5s-6.27 0-7.84.43A2.5 2.5 0 002.4 7.2 26 26 0 002 12a26 26 0 00.4 4.8 2.5 2.5 0 001.76 1.77C5.73 19 12 19 12 19s6.27 0 7.84-.43a2.5 2.5 0 001.76-1.77A26 26 0 0022 12a26 26 0 00-.4-4.8zM10 15V9l5.2 3z"/></svg></a>
+      </div>
+      <nav class="pages" aria-label="Pages"><a href="index.html" class="home-link"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" width="14" height="14"><path d="M13 8H3M7 4L3 8l4 4"/></svg>Home page</a></nav>
+    </div>
+
+
+    <nav aria-label="Graph outline">
+      <ul class="outline">
+        <li><button type="button" data-home="about" style="--c:var(--c-about)" aria-current="true"><span class="dot"></span>About Me</button></li>
+        <li><button type="button" data-home="work" style="--c:var(--c-work)"><span class="dot"></span>Marketing Videos</button></li>
+        <li><button type="button" data-home="projects" style="--c:var(--c-proj)"><span class="dot"></span>Brand Design</button></li>
+        <li><button type="button" data-home="skills" style="--c:var(--c-skills)"><span class="dot"></span>UGC</button></li>
+        <li><button type="button" data-home="edu" style="--c:var(--c-edu)"><span class="dot"></span>Automations</button></li>
+      </ul>
+    </nav>
+
+    <section class="toolbox" aria-labelledby="tools-h">
+      <h2 class="label" id="tools-h">Tools &amp; skills</h2>
+      <ul class="tools">
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14.86 3H23v19zM9.14 3H1v19zM11.992 9.998L17.182 22h-3.394l-1.549-3.813h-3.79z" fill="#EB1000"></path></svg></span>Adobe Suite</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 20a4 4 0 014-4h4v4a4 4 0 01-8 0z" fill="#24CB71"></path><path d="M12 0v8h4a4 4 0 000-8h-4z" fill="#FF7237"></path><path d="M15.967 16a4 4 0 100-8 4 4 0 000 8z" fill="#00B6FF"></path><path d="M4 4a4 4 0 004 4h4V0H8a4 4 0 00-4 4z" fill="#FF3737"></path><path d="M4 12a4 4 0 004 4h4V8H8a4 4 0 00-4 4z" fill="#874FFF"></path></svg></span>Figma</li>
+        <li><span class="ic lg"><svg aria-hidden="true" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.86 22.992c-2.669.245-4.887-2.876-6.597-4.454C10.398 24.759 1 24.177 1 17.86V6.15c0-.921.244-1.861.733-2.65C2.635 1.977 4.383.98 6.15 1h11.71c6.316 0 6.918 9.398.677 10.243l2.97 2.951c3.252 3.064.808 8.929-3.646 8.797zm-1.428-3.721c1.842 1.898 4.774-1.034 2.876-2.876l-5.132-5.132H11.3v2.876l4.436 4.436.696.696zM4.12 17.842c-.037 2.632 4.117 2.632 4.06 0V6.132c.038-1.316-1.353-2.35-2.612-1.955-.057.019-.113.037-.15.056-.79.301-1.335 1.09-1.317 1.936v11.673h.02zm13.74-9.68c2.632.037 2.632-4.098 0-4.06h-6.973c.526 1.109.395 2.857.413 4.06h6.56z"></path></svg></span>Runway</li>
+        <li><span class="ic lg"><svg aria-hidden="true" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.205 8.658v-2.26c0-.19.072-.333.238-.428l4.543-2.616c.619-.357 1.356-.523 2.117-.523 2.854 0 4.662 2.212 4.662 4.566 0 .167 0 .357-.024.547l-4.71-2.759a.797.797 0 00-.856 0l-5.97 3.473zm10.609 8.8V12.06c0-.333-.143-.57-.429-.737l-5.97-3.473 1.95-1.118a.433.433 0 01.476 0l4.543 2.617c1.309.76 2.189 2.378 2.189 3.948 0 1.808-1.07 3.473-2.76 4.163zM7.802 12.703l-1.95-1.142c-.167-.095-.239-.238-.239-.428V5.899c0-2.545 1.95-4.472 4.591-4.472 1 0 1.927.333 2.712.928L8.23 5.067c-.285.166-.428.404-.428.737v6.898zM12 15.128l-2.795-1.57v-3.33L12 8.658l2.795 1.57v3.33L12 15.128zm1.796 7.23c-1 0-1.927-.332-2.712-.927l4.686-2.712c.285-.166.428-.404.428-.737v-6.898l1.974 1.142c.167.095.238.238.238.428v5.233c0 2.545-1.974 4.472-4.614 4.472zm-5.637-5.303l-4.544-2.617c-1.308-.761-2.188-2.378-2.188-3.948A4.482 4.482 0 014.21 6.327v5.423c0 .333.143.571.428.738l5.947 3.449-1.95 1.118a.432.432 0 01-.476 0zm-.262 3.9c-2.688 0-4.662-2.021-4.662-4.519 0-.19.024-.38.047-.57l4.686 2.71c.286.167.571.167.856 0l5.97-3.448v2.26c0 .19-.07.333-.237.428l-4.543 2.616c-.619.357-1.356.523-2.117.523zm5.899 2.83a5.947 5.947 0 005.827-4.756C22.287 18.339 24 15.84 24 13.296c0-1.665-.713-3.282-1.998-4.448.119-.5.19-.999.19-1.498 0-3.401-2.759-5.947-5.946-5.947-.642 0-1.26.095-1.88.31A5.962 5.962 0 0010.205 0a5.947 5.947 0 00-5.827 4.757C1.713 5.447 0 7.945 0 10.49c0 1.666.713 3.283 1.998 4.448-.119.5-.19 1-.19 1.499 0 3.401 2.759 5.946 5.946 5.946.642 0 1.26-.095 1.88-.309a5.96 5.96 0 004.162 1.713z"></path></svg></span>ChatGPT</li>
+        <li><span class="ic lg"><svg aria-hidden="true" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M22.369 17.676c-1.387 1.259-3.17 2.378-5.332 3.417.044.03.086.057.13.083l.018.01.019.012c.216.123.42.184.641.184.222 0 .426-.061.642-.184l.018-.011.019-.011c.14-.084.266-.178.492-.366l.178-.148c.279-.232.426-.342.625-.456.304-.174.612-.266.949-.266.337 0 .645.092.949.266l.023.014c.188.109.334.219.602.442l.178.148c.221.184.346.278.483.36l.028.017.018.01c.21.12.407.181.62.185h.022a.31.31 0 110 .618c-.337 0-.645-.092-.95-.266a3.137 3.137 0 01-.09-.054l-.022-.014-.022-.013-.02-.014a5.356 5.356 0 01-.49-.377l-.159-.132a3.836 3.836 0 00-.483-.36l-.027-.017-.019-.01a1.256 1.256 0 00-.641-.185c-.222 0-.426.061-.641.184l-.02.011-.018.011c-.14.084-.266.178-.492.366l-.158.132a5.125 5.125 0 01-.51.39l-.022.014-.022.014-.09.054a1.868 1.868 0 01-.95.266c-.337 0-.644-.092-.949-.266a3.137 3.137 0 01-.09-.054l-.022-.014-.022-.013-.026-.017a4.881 4.881 0 01-.425-.325.308.308 0 01-.12-.1l-.098-.081a3.836 3.836 0 00-.483-.36l-.027-.017-.019-.01a1.256 1.256 0 00-.641-.185c-.222 0-.426.061-.642.184l-.018.011-.019.011c-.14.084-.266.178-.492.366l-.158.132a5.125 5.125 0 01-.51.39l-.023.014-.022.014-.09.054A1.868 1.868 0 0112 22c-.337 0-.645-.092-.949-.266a3.137 3.137 0 01-.09-.054l-.022-.014-.022-.013-.021-.014a5.356 5.356 0 01-.49-.377l-.158-.132a3.836 3.836 0 00-.483-.36l-.028-.017-.018-.01a1.256 1.256 0 00-.642-.185c-.221 0-.425.061-.641.184l-.019.011-.018.011c-.141.084-.266.178-.492.366l-.158.132a5.125 5.125 0 01-.511.39l-.022.014-.022.014-.09.054a1.868 1.868 0 01-.986.264c-.746-.09-1.319-.38-1.89-.866l-.035-.03c-.047-.041-.118-.106-.192-.174l-.196-.181-.107-.1-.011-.01a1.531 1.531 0 00-.336-.253.313.313 0 00-.095-.03h-.005c-.119.022-.238.059-.361.11a.308.308 0 01-.077.061l-.008.005a.309.309 0 01-.126.034 5.66 5.66 0 00-.774.518l-.416.324-.055.043a6.542 6.542 0 01-.324.236c-.305.207-.552.315-.8.315a.31.31 0 01-.01-.618h.01c.09 0 .235-.062.438-.198l.04-.027c.077-.054.163-.117.27-.199l.385-.301.06-.047c.268-.206.506-.373.73-.505l-.633-1.21a.309.309 0 01.254-.451l20.287-1.305a.309.309 0 01.228.537zm-1.118.14L2.369 19.03l.423.809c.128-.045.256-.078.388-.1a.31.31 0 01.052-.005c.132 0 .26.032.386.093.153.073.294.179.483.35l.016.015.092.086.144.134.097.089c.065.06.125.114.16.144.485.418.948.658 1.554.736h.011a1.25 1.25 0 00.6-.172l.021-.011.019-.011.018-.011c.141-.084.266-.178.492-.366l.178-.148c.279-.232.426-.342.625-.456.305-.174.612-.266.95-.266.336 0 .644.092.948.266l.023.014c.188.109.335.219.603.442l.177.148c.222.184.346.278.484.36l.027.017.019.01c.215.124.42.185.641.185.222 0 .426-.061.641-.184l.019-.011.018-.011c.141-.084.267-.178.493-.366l.177-.148c.28-.232.427-.342.626-.456.304-.174.612-.266.949-.266.337 0 .644.092.949.266l.025.015c.187.109.334.22.603.443 1.867-.878 3.448-1.811 4.73-2.832l.02-.016zM3.653 2.026C6.073 3.06 8.69 4.941 10.8 7.258c2.46 2.7 4.109 5.828 4.637 9.149a.31.31 0 01-.421.335c-2.348-.945-4.54-1.258-6.59-1.02-1.739.2-3.337.792-4.816 1.703-.294.182-.62-.182-.405-.454 1.856-2.355 2.581-4.99 2.343-7.794-.195-2.292-1.031-4.61-2.284-6.709a.31.31 0 01.388-.442zM10.04 4.45c1.778.543 3.892 2.102 5.782 4.243 1.984 2.248 3.552 4.934 4.347 7.582a.31.31 0 01-.401.38l-.022-.01-.386-.154a10.594 10.594 0 00-.291-.112l-.016-.006c-.68-.247-1.199-.291-1.944-.101a.31.31 0 01-.375-.218C15.378 11.123 13.073 7.276 9.775 5c-.291-.201-.072-.653.266-.55zM4.273 2.996l.008.015c1.028 1.94 1.708 4.031 1.885 6.113.213 2.513-.31 4.906-1.673 7.092l-.02.031.003-.001c1.198-.581 2.47-.969 3.825-1.132l.055-.006c1.981-.23 4.083.029 6.309.837l.066.025-.007-.039c-.593-2.95-2.108-5.737-4.31-8.179l-.07-.078c-1.785-1.96-3.944-3.6-6.014-4.65l-.057-.028zm7.92 3.238l.048.048c2.237 2.295 3.885 5.431 4.974 9.191l.038.132.022-.004c.71-.133 1.284-.063 1.963.18l.027.01.066.024.046.018-.025-.073c-.811-2.307-2.208-4.62-3.936-6.594l-.058-.065c-1.02-1.155-2.103-2.132-3.15-2.856l-.015-.011z"></path></svg></span>Midjourney</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 19.824c0-.548.444-.992.991-.992h.744a.991.991 0 010 1.983H2.49a.991.991 0 01-.991-.991z" fill="#F3AD61"></path><path d="M14.837 13.5h7.076c.522 0 .784-.657.413-1.044l-1.634-1.704a3.183 3.183 0 00-4.636 0l-1.633 1.704c-.37.385-.107 1.044.414 1.044zM3.587 13.5h7.076c.521 0 .784-.659.414-1.044l-1.635-1.704a3.183 3.183 0 00-4.636 0l-1.633 1.704c-.37.385-.107 1.044.414 1.044z" fill="#F9C23C"></path><path d="M12.525 1.521c3.69-.53 5.97 8.923 4.309 12.744-1.662 3.82-5.248 4.657-9.053 6.152a3.49 3.49 0 01-1.279.244c-1.443 0-2.227 1.187-2.774-.282-.707-1.9.22-4.031 2.069-4.757 2.014-.79 3.084-2.308 3.89-4.364.82-2.096.877-2.956.873-5.241-.003-1.827-.123-4.195 1.965-4.496z" fill="#FEEFC2"></path><path d="M16.834 14.264l-7.095-3.257c-.815 1.873-2.29 3.308-4.156 4.043-2.16.848-3.605 3.171-2.422 5.54 2.364 4.727 13.673-.05 13.673-6.325z" fill="#FCD53F"></path><path clip-rule="evenodd" d="M13.68 12.362c.296.094.46.41.365.707-1.486 4.65-5.818 6.798-9.689 6.997a.562.562 0 11-.057-1.124c3.553-.182 7.372-2.138 8.674-6.216a.562.562 0 01.707-.364z" fill="#F9C23C" fill-rule="evenodd"></path><path d="M17.43 19.85l-7.648-8.835h6.753c1.595.08 2.846 1.433 2.846 3.073v5.664c0 .997-.898 1.302-1.95.098z" fill="#FFF478"></path></svg></span>Nano Banana</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.988 1.622A8.539 8.539 0 003.45 8.446c.349 4.408 4.506 7.995 8.276 7.995 3.507 0 4.88-3.061 4.541-5.14a4.318 4.318 0 00-.95-2.073c.632.34 1.244.776 1.809 1.3 1.52 1.415 2.44 3.229 2.587 5.1C20.04 19.763 16.98 24 11.863 24c-1.695 0-3.48-.432-4.98-1.143C2.816 20.937 0 16.797 0 12.002 0 7.571 2.405 3.7 5.988 1.622zM12.136 0c1.696 0 3.481.432 4.98 1.143C21.186 3.063 24 7.203 24 11.998c0 4.431-2.405 8.303-5.988 10.38a8.539 8.539 0 002.538-6.824c-.349-4.408-4.506-7.995-8.276-7.995-3.507 0-4.88 3.061-4.541 5.14a4.3 4.3 0 00.953 2.073 8.723 8.723 0 01-1.81-1.3c-1.52-1.415-2.44-3.227-2.589-5.1C3.96 4.237 7.02 0 12.137 0z" fill="#4285F4" fill-rule="evenodd"></path></svg></span>Veo 3</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.412 13.775A23.193 23.193 0 017.41 9.32c3.17-5.492 7.795-8.757 10.33-7.294C12.038-1.266 4.598.944 1.122 6.964A13.378 13.378 0 00.085 9.22c-.259.739.092 1.534.77 1.926l4.557 2.63z" fill="url(#lobe-icons-kling-0-_R_0_)"></path><path d="M18.588 10.164a23.188 23.188 0 01-1.999 4.455c-3.17 5.492-7.795 8.758-10.33 7.294 5.703 3.293 13.143 1.082 16.619-4.938a13.392 13.392 0 001.037-2.255c.259-.738-.092-1.534-.77-1.925l-4.557-2.63z" fill="url(#lobe-icons-kling-1-_R_0_)"></path><path d="M16.59 14.62c3.17-5.492 3.686-11.13 1.15-12.594C15.207.563 10.582 3.83 7.41 9.32c2.074-3.59 5.809-5.315 8.344-3.852 2.534 1.464 2.908 5.56.835 9.151z" fill="url(#lobe-icons-kling-2-_R_0_)"></path><path d="M7.41 9.32c-3.17 5.492-3.686 11.13-1.15 12.593 2.534 1.464 7.159-1.802 10.33-7.294-2.074 3.591-5.809 5.316-8.344 3.852-2.534-1.463-2.908-5.56-.835-9.15z" fill="url(#lobe-icons-kling-3-_R_0_)"></path><defs><radialGradient cx="0" cy="0" gradientTransform="matrix(7.47772 -12.51022 17.14368 10.24728 5.173 13.637)" gradientUnits="userSpaceOnUse" id="lobe-icons-kling-0-_R_0_" r="1"><stop offset=".095" stop-color="#FFF959"></stop><stop offset=".326" stop-color="#0DF35E"></stop><stop offset=".64" stop-color="#0BF2F9"></stop><stop offset="1" stop-color="#04A6F0"></stop></radialGradient><radialGradient cx="0" cy="0" gradientTransform="rotate(120.868 6.491 10.491) scale(14.5747 19.9728)" gradientUnits="userSpaceOnUse" id="lobe-icons-kling-1-_R_0_" r="1"><stop offset=".095" stop-color="#FFF959"></stop><stop offset=".326" stop-color="#0DF35E"></stop><stop offset=".64" stop-color="#0BF2F9"></stop><stop offset="1" stop-color="#04A6F0"></stop></radialGradient><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-kling-2-_R_0_" x1="15.578" x2="18.062" y1="1.798" y2="9.861"><stop stop-color="#003EFF"></stop><stop offset="1" stop-color="#0BFFE7"></stop></linearGradient><linearGradient gradientUnits="userSpaceOnUse" id="lobe-icons-kling-3-_R_0_" x1="8.422" x2="5.938" y1="22.142" y2="14.079"><stop stop-color="#003EFF"></stop><stop offset="1" stop-color="#0BFFE7"></stop></linearGradient></defs></svg></span>Kling 2.6</li>
+        <li><span class="ic lg"><svg aria-hidden="true" fill="currentColor" fill-rule="evenodd" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5 0h5v24H5V0zM14 0h5v24h-5V0z"></path></svg></span>ElevenLabs</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" d="M24 8.4c0 1.325-1.102 2.4-2.462 2.4-1.146 0-2.11-.765-2.384-1.8h-3.436c-.602 0-1.115.424-1.214 1.003l-.101.592a2.38 2.38 0 01-.8 1.405c.412.354.704.844.8 1.405l.1.592A1.222 1.222 0 0015.719 15h.975c.273-1.035 1.237-1.8 2.384-1.8 1.36 0 2.461 1.075 2.461 2.4S20.436 18 19.078 18c-1.147 0-2.11-.765-2.384-1.8h-.975c-1.204 0-2.23-.848-2.428-2.005l-.101-.592a1.222 1.222 0 00-1.214-1.003H10.97c-.308.984-1.246 1.7-2.356 1.7-1.11 0-2.048-.716-2.355-1.7H4.817c-.308.984-1.246 1.7-2.355 1.7C1.102 14.3 0 13.225 0 11.9s1.102-2.4 2.462-2.4c1.183 0 2.172.815 2.408 1.9h1.337c.236-1.085 1.225-1.9 2.408-1.9 1.184 0 2.172.815 2.408 1.9h.952c.601 0 1.115-.424 1.213-1.003l.102-.592c.198-1.157 1.225-2.005 2.428-2.005h3.436c.274-1.035 1.238-1.8 2.384-1.8C22.898 6 24 7.075 24 8.4zm-1.23 0c0 .663-.552 1.2-1.232 1.2-.68 0-1.23-.537-1.23-1.2 0-.663.55-1.2 1.23-1.2.68 0 1.231.537 1.231 1.2zM2.461 13.1c.68 0 1.23-.537 1.23-1.2 0-.663-.55-1.2-1.23-1.2-.68 0-1.231.537-1.231 1.2 0 .663.55 1.2 1.23 1.2zm6.153 0c.68 0 1.231-.537 1.231-1.2 0-.663-.55-1.2-1.23-1.2-.68 0-1.231.537-1.231 1.2 0 .663.55 1.2 1.23 1.2zm10.462 3.7c.68 0 1.23-.537 1.23-1.2 0-.663-.55-1.2-1.23-1.2-.68 0-1.23.537-1.23 1.2 0 .663.55 1.2 1.23 1.2z" fill="#EA4B71" fill-rule="evenodd"></path></svg></span>n8n</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.485 23.76c-.568 0-1.026-.207-1.325-.598-.307-.402-.387-.964-.22-1.54l.672-2.315a.605.605 0 00-.1-.536.622.622 0 00-.494-.243H2.085c-.568 0-1.026-.207-1.325-.598-.307-.403-.387-.964-.22-1.54l2.31-7.917.255-.87c.343-1.18 1.592-2.14 2.786-2.14h2.313c.276 0 .519-.18.595-.442l.764-2.633C9.906 1.208 11.155.249 12.35.249l4.945-.008h3.62c.568 0 1.027.206 1.325.597.307.402.387.964.22 1.54l-1.035 3.566c-.343 1.178-1.593 2.137-2.787 2.137l-4.956.01H11.37a.618.618 0 00-.594.441l-1.928 6.604a.605.605 0 00.1.537c.118.153.3.243.495.243l3.275-.006h3.61c.568 0 1.026.206 1.325.598.307.402.387.964.22 1.54l-1.036 3.565c-.342 1.179-1.592 2.138-2.786 2.138l-4.957.01h-3.61z" fill="#F0FF41"></path></svg></span>ComfyUI</li>
+        <li><span class="ic lg"><svg aria-hidden="true" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4.709 15.955l4.72-2.647.08-.23-.08-.128H9.2l-.79-.048-2.698-.073-2.339-.097-2.266-.122-.571-.121L0 11.784l.055-.352.48-.321.686.06 1.52.103 2.278.158 1.652.097 2.449.255h.389l.055-.157-.134-.098-.103-.097-2.358-1.596-2.552-1.688-1.336-.972-.724-.491-.364-.462-.158-1.008.656-.722.881.06.225.061.893.686 1.908 1.476 2.491 1.833.365.304.145-.103.019-.073-.164-.274-1.355-2.446-1.446-2.49-.644-1.032-.17-.619a2.97 2.97 0 01-.104-.729L6.283.134 6.696 0l.996.134.42.364.62 1.414 1.002 2.229 1.555 3.03.456.898.243.832.091.255h.158V9.01l.128-1.706.237-2.095.23-2.695.08-.76.376-.91.747-.492.584.28.48.685-.067.444-.286 1.851-.559 2.903-.364 1.942h.212l.243-.242.985-1.306 1.652-2.064.73-.82.85-.904.547-.431h1.033l.76 1.129-.34 1.166-1.064 1.347-.881 1.142-1.264 1.7-.79 1.36.073.11.188-.02 2.856-.606 1.543-.28 1.841-.315.833.388.091.395-.328.807-1.969.486-2.309.462-3.439.813-.042.03.049.061 1.549.146.662.036h1.622l3.02.225.79.522.474.638-.079.485-1.215.62-1.64-.389-3.829-.91-1.312-.329h-.182v.11l1.093 1.068 2.006 1.81 2.509 2.33.127.578-.322.455-.34-.049-2.205-1.657-.851-.747-1.926-1.62h-.128v.17l.444.649 2.345 3.521.122 1.08-.17.353-.608.213-.668-.122-1.374-1.925-1.415-2.167-1.143-1.943-.14.08-.674 7.254-.316.37-.729.28-.607-.461-.322-.747.322-1.476.389-1.924.315-1.53.286-1.9.17-.632-.012-.042-.14.018-1.434 1.967-2.18 2.945-1.726 1.845-.414.164-.717-.37.067-.662.401-.589 2.388-3.036 1.44-1.882.93-1.086-.006-.158h-.055L4.132 18.56l-1.13.146-.487-.456.061-.746.231-.243 1.908-1.312-.006.006z" fill="#D97757" fill-rule="nonzero"></path></svg></span>Claude</li>
+      </ul>
+    </section>
+  </aside>
+
+  <main class="canvas" id="canvas" aria-label="About me node graph">
+    <canvas id="dots" aria-hidden="true"></canvas>
+    <div class="zoom">
+      <div class="grp">
+        <button type="button" id="zout" aria-label="Zoom out">−</button>
+        <output id="zval" class="mono" aria-live="polite">100%</output>
+        <button type="button" id="zin" aria-label="Zoom in">+</button>
+      </div>
+      <div class="grp"><button type="button" id="fit" aria-label="Fit graph to screen"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div>
+    </div>
+    <p class="hint mono">Drag nodes · drag canvas to pan · ctrl + scroll to zoom</p>
+
+    <div class="world" id="world">
+      <svg id="wires" aria-hidden="true"></svg>
+
+      <article class="node" id="profile" style="--d:.05s">
+        <div class="pcols">
+          <div class="ph portrait"><img src="media/portrait.jpg" alt="Portrait of Elimelech Adga" draggable="false"></div>
+          <div>
+            <header class="nh"><span class="n">01</span>Profile<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+            <h2>Who I am.</h2>
+            <p class="lead">Creative AI Production Lead with 7+ years in motion design, video production and AI content.</p>
+            <div class="pbody"><p>I build and scale AI-driven video pipelines, from 1 to 24 videos a day.</p>
+            <p>I spent 7 years at D-ID, the AI avatar platform, producing marketing videos, product demos and full creative systems. Today I lead the AI production team at WIDER, scaling UGC and AI avatar content for user acquisition.</p></div>
+            <ul class="chips"><li>Tel Aviv</li><li>Hebrew · native</li><li>English · professional</li></ul>
+          </div>
+        </div>
+        <span class="port out" data-port="out"></span>
+      </article>
+
+      <article class="node" id="exp" style="--d:.35s">
+        <span class="port top" data-port="in"></span>
+        <header class="nh"><span class="n">02</span>Experience<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+        <ol class="tl">
+          <li>
+            <div class="tl-h"><b>WIDER</b><span>Sep 2025 – Present</span></div>
+            <p class="role">Creative AI Production Team Lead · Tel Aviv · Hybrid</p>
+            <ul class="bul"><li>Leads the AI video team using Veo3, Runway, Kling AI and ElevenLabs.</li><li>Scaled output to 24 videos a day through automated pipelines.</li><li>Sets creative direction and quality standards for AI-generated video.</li></ul>
+          </li>
+          <li>
+            <div class="tl-h"><b>D-ID</b><span>Apr 2018 – Sep 2025</span></div>
+            <p class="role">Creative Motion Designer · Senior Video Editor &amp; Motion Designer · Graphic Designer</p>
+            <ul class="bul"><li>Marketing videos, product demos and launch content for the AI avatar platform.</li><li>Built motion systems used across product, sales and growth teams.</li><li>Brought generative AI tools into the video and design workflow.</li></ul>
+          </li>
+          <li>
+            <div class="tl-h"><b>Gofman Creative</b><span>Oct 2017 – Mar 2018</span></div>
+            <p class="role">Digital Designer · Ramat Gan</p>
+            <ul class="bul"><li>Motion and video editing for large-brand social campaigns.</li></ul>
+          </li>
+          <li>
+            <div class="tl-h"><b>Johnson85</b><span>Feb 2015 – Apr 2021</span></div>
+            <p class="role">Head of Design · Freelance · Tel Aviv</p>
+            <ul class="bul"><li>Directed a team of illustration designers.</li><li>Brand identity packages for fashion, lifestyle and retail clients.</li></ul>
+          </li>
+        </ol>
+      </article>
+
+      <article class="node" id="toolkit" style="--d:.45s">
+        <span class="port top" data-port="in"></span>
+        <header class="nh"><span class="n">03</span>Toolkit<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+        <dl class="kit">
+          <div><dt>AI video</dt><dd><ul class="chips sm"><li>Veo3</li><li>Runway</li><li>Kling AI 2.6</li><li>ElevenLabs</li><li>Weavy</li><li>Seedance 2.0</li></ul></dd></div>
+          <div><dt>AI image</dt><dd><ul class="chips sm"><li>Midjourney</li><li>Nano Banana</li><li>ComfyUI</li><li>Stable Diffusion</li></ul></dd></div>
+          <div><dt>Motion &amp; design</dt><dd><ul class="chips sm"><li>After Effects</li><li>Premiere Pro</li><li>Remotion</li><li>Figma</li><li>Illustrator</li><li>Photoshop</li></ul></dd></div>
+          <div><dt>Automation</dt><dd><ul class="chips sm"><li>n8n</li><li>Claude API</li><li>ComfyUI API</li></ul></dd></div>
+          <div><dt>Growth</dt><dd><ul class="chips sm"><li>UGC Production</li><li>Creative Testing</li><li>User Acquisition</li></ul></dd></div>
+        </dl>
+      </article>
+
+      <article class="node" id="edu" style="--d:.55s">
+        <span class="port top" data-port="in"></span>
+        <header class="nh"><span class="n">04</span>Education<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+        <div class="ed"><h3>UI/UX Advanced</h3><p>Netcraft Academy · 2021–2022</p></div>
+        <div class="ed"><h3>Interactive Arts</h3><p>AVNI Institute · 2013–2017</p></div>
+        <span class="port out" data-port="out"></span>
+      </article>
+
+      <article class="node" id="recog" style="--d:.65s">
+        <span class="port top" data-port="in"></span>
+        <header class="nh"><span class="n">05</span>Published<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+        <div class="ph portrait"><img src="media/amharic-font.jpg" alt="Three Amharic letters from the typeface in yellow, green and red" loading="lazy" style="object-position:50% 50%"></div>
+        <h3>Amharic Font &amp; Haggadah</h3>
+        <p>An original Amharic typeface and a Passover Haggadah, both featured in Portfolio Magazine.</p>
+        <a class="more-link" style="margin-top:12px" href="https://alefalefalef.co.il/%D7%98%D7%99%D7%A4%D7%95%D7%92%D7%A8%D7%A4%D7%99%D7%94-%D7%90%D7%9E%D7%94%D7%A8%D7%99%D7%AA-%D7%91%D7%99%D7%A9%D7%A8%D7%90%D7%9C/" target="_blank" rel="noopener">Read the feature ↗</a>
+        <span class="port out" data-port="out"></span>
+      </article>
+
+      <article class="node" id="press" style="--d:.7s">
+        <span class="port top" data-port="in"></span>
+        <header class="nh"><span class="n">06</span>In the press<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+        <div class="ph portrait"><img src="media/press.jpg" alt="Elimelech in a studio portrait" loading="lazy" style="object-position:60% 40%"></div>
+        <h3>Embracing AI</h3>
+        <p class="meta">Portfolio Magazine · Jan 2023</p>
+        <p>A profile on why AI won't replace creative thinking, and how it is shaping a new generation of creatives.</p>
+        <a class="more-link" style="margin-top:12px" href="https://www.prtfl.co.il/archives/177217" target="_blank" rel="noopener">Read the article ↗</a>
+      </article>
+
+      <article class="node" id="contact" style="--d:.75s">
+        <span class="port top" data-port="in"></span>
+        <header class="nh"><span class="n">07</span>Contact<span class="more" aria-hidden="true"><i></i><i></i><i></i></span></header>
+        <h3 class="cta">Let's make something move.</h3>
+        <ul class="clist">
+          <li><span>Email</span><button class="copy" type="button" data-copy="elimelech.creative@gmail.com">elimelech.creative@gmail.com</button></li>
+          <li><span>LinkedIn</span><a href="https://www.linkedin.com/in/elimelech-adga/" target="_blank" rel="noopener">elimelech-adga ↗</a></li>
+          <li><span>Web</span><a href="https://elimelechadga.com" target="_blank" rel="noopener">elimelechadga.com ↗</a></li>
+          <li><span>YouTube</span><a href="https://www.youtube.com/@%D7%90%D7%9C%D7%99%D7%9E%D7%9C%D7%9A%D7%90%D7%93%D7%92%D7%94" target="_blank" rel="noopener">@אלימלךאדגה ↗</a></li>
+        </ul>
+      </article>
+    </div>
+  </main>
+</div>
+
+<script>
+window.GRAPH={hub:'profile', pos:{profile:[30,50], exp:[30,640], toolkit:[490,680], edu:[920,680], recog:[1260,640], contact:[920,960], press:[1260,1080]}, from:{contact:'edu', press:'recog'}, order:['exp','toolkit','edu','recog','contact','press'], color:{press:'var(--c-press)',exp:'var(--c-work)',toolkit:'var(--c-proj)',edu:'var(--c-edu)',recog:'var(--c-skills)',contact:'var(--c-contact)'}};
+</script>
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  var canvas=document.getElementById('canvas'), world=document.getElementById('world'), svg=document.getElementById('wires');
+  var zval=document.getElementById('zval');
+  var flowMQ=matchMedia('(max-width:900px)');
+  var still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var G=window.GRAPH, HUB=G.hub, POS=G.pos, ORDER=G.order, COLOR=G.color;
+  var z=1, tx=0, ty=0;
+  var node=function(k){return document.getElementById(k)};
+
+  // wires: one path + one travelling pulse per link
+  var wires={};
+  ORDER.forEach(function(k,i){
+    var p=document.createElementNS(NS,'path');
+    p.setAttribute('class','wire'); p.id='w-'+k; p.style.setProperty('--c',COLOR[k]);
+    svg.appendChild(p);
+    var c=document.createElementNS(NS,'circle');
+    c.setAttribute('r','3.5'); c.setAttribute('class','pulse'); c.style.setProperty('--c',COLOR[k]);
+    var m=document.createElementNS(NS,'animateMotion');
+    m.setAttribute('dur','2.8s'); m.setAttribute('repeatCount','indefinite'); m.setAttribute('begin',(-i*.7)+'s');
+    var mp=document.createElementNS(NS,'mpath'); mp.setAttributeNS('http://www.w3.org/1999/xlink','href','#w-'+k); mp.setAttribute('href','#w-'+k);
+    m.appendChild(mp); c.appendChild(m);
+    if(!still) svg.appendChild(c);
+    wires[k]=p;
+    node(k).addEventListener('pointerenter',function(){p.classList.add('hot')});
+    node(k).addEventListener('pointerleave',function(){p.classList.remove('hot')});
+  });
+
+  function portXY(el){
+    var n=el.closest('.node');
+    return [n.offsetLeft+el.offsetLeft+el.offsetWidth/2, n.offsetTop+el.offsetTop+el.offsetHeight/2];
+  }
+  function draw(){
+    var flow=flowMQ.matches;
+    ORDER.forEach(function(k,i){
+      var b=portXY(node(k).querySelector('[data-port="in"]')), a, d;
+      if(flow){
+        // pipeline: each node feeds the next one down
+        var prev=node(i?ORDER[i-1]:HUB);
+        a=[prev.offsetLeft+prev.offsetWidth/2, prev.offsetTop+prev.offsetHeight];
+        if(!i) a=portXY(node(HUB).querySelector('[data-port="out"]'));
+        var k1=(b[1]-a[1])*.5;
+        d='M'+a[0]+' '+a[1]+' C'+a[0]+' '+(a[1]+k1)+' '+b[0]+' '+(b[1]-k1)+' '+b[0]+' '+b[1];
+      }else{
+        a=portXY(node((G.from&&G.from[k])||HUB).querySelector('[data-port="out"]'));
+        var dy=Math.abs(b[1]-a[1]), dx=Math.abs(b[0]-a[0]);
+        if(node(k).querySelector('.port.left')){
+          var k3=Math.max(90,dx*.5);
+          d='M'+a[0]+' '+a[1]+' C'+(a[0]+90)+' '+(a[1]+60)+' '+(b[0]-k3*.35)+' '+(b[1]+10)+' '+b[0]+' '+b[1];
+        }else{
+          var k4=Math.max(50,dy*.55);
+          d='M'+a[0]+' '+a[1]+' C'+a[0]+' '+(a[1]+k4)+' '+b[0]+' '+(b[1]-k4)+' '+b[0]+' '+b[1];
+        }
+      }
+      wires[k].setAttribute('d',d);
+    });
+  }
+
+  function apply(){
+    world.style.transform='translate('+tx+'px,'+ty+'px) scale('+z+')';
+    kickDots();
+    zval.textContent=Math.round(z*100)+'%';
+  }
+  function place(){
+    Object.keys(POS).forEach(function(k){var n=node(k); n.style.left=POS[k][0]+'px'; n.style.top=POS[k][1]+'px'});
+  }
+  function bounds(){
+    var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    Object.keys(POS).forEach(function(k){var n=node(k);
+      x0=Math.min(x0,n.offsetLeft); y0=Math.min(y0,n.offsetTop);
+      x1=Math.max(x1,n.offsetLeft+n.offsetWidth); y1=Math.max(y1,n.offsetTop+n.offsetHeight)});
+    return [x0,y0,x1,y1];
+  }
+  function fit(glide){
+    if(flowMQ.matches) return;
+    var b=bounds(), cw=canvas.clientWidth, ch=canvas.clientHeight, pad=48;
+    z=Math.min(1,(cw-pad*2)/(b[2]-b[0]),(ch-pad*2-20)/(b[3]-b[1]));
+    z=Math.max(.35,z);
+    tx=(cw-(b[2]-b[0])*z)/2-b[0]*z;
+    ty=(ch-(b[3]-b[1])*z)/2-b[1]*z+10;
+    glideTo(glide);
+  }
+  // first view: fill the window's width so text stays readable; when the graph is taller than the window, start at its top and let people pan down
+  function initView(){
+    if(flowMQ.matches) return;
+    var b=bounds(), cw=canvas.clientWidth, ch=canvas.clientHeight, pad=48;
+    var zf=Math.min(1,(cw-pad*2)/(b[2]-b[0]),(ch-pad*2-20)/(b[3]-b[1])), zw=Math.min(1,(cw-pad*2)/(b[2]-b[0]));
+    if(zf>=.8 || zw<=zf){ fit(false); return; }
+    z=zw;
+    tx=(cw-(b[2]-b[0])*z)/2-b[0]*z;
+    ty=pad-b[1]*z;
+    glideTo(false);
+  }
+  function glideTo(glide){
+    if(glide && !still){world.classList.add('glide'); setTimeout(function(){world.classList.remove('glide')},720)}
+    apply();
+  }
+  function zoomAt(nz,px,py,glide){
+    nz=Math.min(1.6,Math.max(.35,nz));
+    tx=px-(px-tx)*nz/z; ty=py-(py-ty)*nz/z; z=nz; glideTo(glide);
+  }
+
+  document.getElementById('zin').onclick=function(){zoomAt(Math.round((z+.1)*10)/10,canvas.clientWidth/2,canvas.clientHeight/2,true)};
+  document.getElementById('zout').onclick=function(){zoomAt(Math.round((z-.1)*10)/10,canvas.clientWidth/2,canvas.clientHeight/2,true)};
+  document.getElementById('fit').onclick=function(){fit(true)};
+
+  canvas.addEventListener('wheel',function(e){
+    if(flowMQ.matches) return;
+    e.preventDefault();
+    var r=canvas.getBoundingClientRect();
+    if(e.ctrlKey||e.metaKey){ zoomAt(z*Math.exp(-e.deltaY*.0025), e.clientX-r.left, e.clientY-r.top) }
+    else { tx-=e.deltaX; ty-=e.deltaY; apply() }
+  },{passive:false});
+
+  // drag: nodes move, empty canvas pans
+  var drag=null;
+  canvas.addEventListener('pointerdown',function(e){
+    if(flowMQ.matches || e.button!==0) return;
+    if(e.target.closest('a,button,.zoom')) return;
+    var n=e.target.closest('.node');
+    if(n){
+      drag={n:n, x:e.clientX, y:e.clientY, l:n.offsetLeft, t:n.offsetTop};
+      n.classList.add('dragging');
+    }else{
+      drag={pan:true, x:e.clientX, y:e.clientY, tx:tx, ty:ty};
+      canvas.classList.add('panning');
+    }
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove',function(e){
+    if(!drag) return;
+    var dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+    if(drag.pan){ tx=drag.tx+dx; ty=drag.ty+dy; apply(); }
+    else{
+      var k=drag.n.id; POS[k]=[drag.l+dx/z, drag.t+dy/z];
+      drag.n.style.left=POS[k][0]+'px'; drag.n.style.top=POS[k][1]+'px'; draw();
+    }
+  });
+  function end(){ if(!drag) return; if(drag.n) drag.n.classList.remove('dragging'); canvas.classList.remove('panning'); drag=null; }
+  canvas.addEventListener('pointerup',end); canvas.addEventListener('pointercancel',end);
+
+  // sidebar outline is the home page's: each item opens that card on the home page
+  document.querySelectorAll('[data-home]').forEach(function(btn){
+    btn.addEventListener('click',function(){ var k=btn.dataset.home; location.href= k==='work'?'marketing.html' : k==='skills'?'ugc.html' : k==='projects'?'brand.html' : (k==='edu'?'automations.html':'index.html#'+k); });
+  });
+  // sidebar outline: glide to a node and flash it
+  document.querySelectorAll('[data-go]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      document.querySelectorAll('[data-go]').forEach(function(b){b.setAttribute('aria-current', b===btn?'true':'false')});
+      var n=node(btn.dataset.go);
+      if(flowMQ.matches){ n.scrollIntoView({behavior:still?'auto':'smooth', block:'start'}); }
+      else{
+        if(z<.8) z=.9;
+        var cw=canvas.clientWidth, ch=canvas.clientHeight;
+        tx=cw/2-(n.offsetLeft+n.offsetWidth/2)*z;
+        ty=ch/2-(n.offsetTop+n.offsetHeight/2)*z;
+        glideTo(true);
+      }
+      n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash');
+      clearTimeout(n._t); n._t=setTimeout(function(){n.classList.remove('flash')},1600);
+      if(wires[n.id]){ wires[n.id].classList.add('hot'); setTimeout(function(){wires[n.id].classList.remove('hot')},1600) }
+    });
+  });
+
+  function layout(){
+    if(flowMQ.matches){ world.style.transform=''; }
+    else{ place(); }
+    draw();
+  }
+
+  // ── interactive dot field: dots swell, glow and part around the cursor; a click sends a ripple ──
+  var dc=document.getElementById('dots'), dx=dc.getContext('2d');
+  var mouse={x:-9999,y:-9999,sx:-9999,sy:-9999,on:0,str:0}, ripples=[], raf=0, dpr=1;
+  function sizeDots(){
+    dpr=Math.min(2,window.devicePixelRatio||1);
+    dc.width=Math.round(canvas.clientWidth*dpr); dc.height=Math.round(canvas.clientHeight*dpr);
+    kickDots();
+  }
+  function kickDots(){ if(!raf && dx) raf=requestAnimationFrame(frame); }
+  function frame(now){
+    raf=0;
+    if(flowMQ.matches) return;
+    var W=canvas.clientWidth, H=canvas.clientHeight;
+    mouse.str+=((still?0:mouse.on)-mouse.str)*.12;
+    if(mouse.sx<-9000){mouse.sx=mouse.x; mouse.sy=mouse.y}
+    mouse.sx+=(mouse.x-mouse.sx)*.22; mouse.sy+=(mouse.y-mouse.sy)*.22;
+    ripples=ripples.filter(function(r){return now-r.t<1400});
+    dx.setTransform(dpr,0,0,dpr,0,0); dx.clearRect(0,0,W,H);
+    var sp=24*z; while(sp<14) sp*=2;
+    var ox=((tx%sp)+sp)%sp, oy=((ty%sp)+sp)%sp, R=140, str=mouse.str;
+    for(var y=oy-sp; y<H+sp; y+=sp){
+      for(var x=ox-sp; x<W+sp; x+=sp){
+        var f=0, px=x, py=y;
+        if(str>.01){
+          var ddx=x-mouse.sx, ddy=y-mouse.sy, d=Math.sqrt(ddx*ddx+ddy*ddy);
+          if(d<R){ var k=1-d/R; f=k*k*str; var push=f*5/(d||1); px+=ddx*push; py+=ddy*push; }
+        }
+        for(var i=0;i<ripples.length;i++){
+          var rp=ripples[i], age=(now-rp.t)/1400, rr=age*520, rdx=x-rp.x, rdy=y-rp.y, rd=Math.sqrt(rdx*rdx+rdy*rdy), band=1-Math.abs(rd-rr)/36;
+          if(band>0){ var g=band*(1-age)*.7; f=Math.max(f,g); px+=rdx/(rd||1)*g*2.5; py+=rdy/(rd||1)*g*2.5; }
+        }
+        var a=.55+f*.4, r=1+f*.9;
+        dx.fillStyle='rgba('+Math.round(140-f*100)+','+Math.round(200-f*50)+',255,'+a+')';
+        dx.beginPath(); dx.arc(px,py,r,0,6.2832); dx.fill();
+      }
+    }
+    if(mouse.str>.01 || Math.abs(mouse.x-mouse.sx)>.5 || ripples.length) kickDots();
+  }
+  canvas.addEventListener('pointermove',function(e){var r=canvas.getBoundingClientRect(); mouse.x=e.clientX-r.left; mouse.y=e.clientY-r.top; mouse.on=1; kickDots()});
+  canvas.addEventListener('pointerleave',function(){mouse.on=0; kickDots()});
+  canvas.addEventListener('pointerdown',function(e){
+    if(still||flowMQ.matches||e.target.closest('.node,.zoom')) return;
+    var r=canvas.getBoundingClientRect(); ripples.push({x:e.clientX-r.left,y:e.clientY-r.top,t:performance.now()}); kickDots();
+  });
+  addEventListener('resize',sizeDots);
+  sizeDots();
+
+  // UGC preview: progress bar follows the clip, button toggles sound
+  var v=document.getElementById('ugcv'), vb=document.getElementById('ugcbar'), snd=document.getElementById('ugcsnd');
+  if(v){
+    if(still){ v.removeAttribute('autoplay'); v.pause(); }
+    v.addEventListener('timeupdate',function(){ if(v.duration) vb.style.width=(v.currentTime/v.duration*100)+'%' });
+    snd.addEventListener('click',function(){
+      v.muted=!v.muted; if(v.paused) v.play().catch(function(){});
+      snd.setAttribute('aria-pressed',String(!v.muted)); snd.setAttribute('aria-label', v.muted?'Turn sound on':'Turn sound off');
+    });
+  }
+
+  document.querySelectorAll('[data-copy]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var t=b.dataset.copy, done=function(){b.textContent='Copied'; setTimeout(function(){b.textContent=t},1400)};
+      try{navigator.clipboard.writeText(t).then(done,function(){})}catch(e){}
+    });
+  });
+  layout(); initView();
+  if(location.hash!=='#enter' || still || flowMQ.matches) document.documentElement.classList.remove('entering');
+  // arriving from "More about me": the home zoom ended on this canvas's grey; the grey lifts while the page grows into place
+  if(location.hash==='#enter' && !still && !flowMQ.matches){
+    try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){}
+    // keep moving forward: the page arrives from slightly smaller and grows into place
+    var cx=canvas.clientWidth/2, cy=canvas.clientHeight/2, k=.92;
+    world.animate([
+      {transform:'translate('+(cx-(cx-tx)*k)+'px,'+(cy-(cy-ty)*k)+'px) scale('+(z*k)+')', opacity:0},
+      {opacity:1, offset:.6},
+      {transform:'translate('+tx+'px,'+ty+'px) scale('+z+')', opacity:1}
+    ],{duration:1000, easing:'cubic-bezier(.16,1,.3,1)'});
+    requestAnimationFrame(function(){ document.documentElement.classList.remove('entering'); });
+  }
+
+  flowMQ.addEventListener('change',function(){layout(); fit(false)});
+  addEventListener('resize',function(){draw()});
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){draw(); initView()});
+  if(window.ResizeObserver){ new ResizeObserver(draw).observe(world); }
+})();
+</script>
+
+</body></html>
