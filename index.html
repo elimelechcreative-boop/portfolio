@@ -1,3 +1,5 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Elimelech Adga Motion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -248,6 +250,23 @@ button{font:inherit; color:inherit}
   .kids.open{display:grid}
   .node.kid .port{display:none}
   .kh{white-space:normal; align-items:flex-start}
+}
+
+/* ── phone polish: compact outline, projects always visible as a swipe row ── */
+@media (max-width:900px){
+  .outline{flex-direction:row; flex-wrap:nowrap; overflow-x:auto; gap:8px; margin:0 -16px; padding:0 16px; scrollbar-width:none}
+  .outline::-webkit-scrollbar{display:none}
+  .outline li{flex:none}
+  .outline button{width:auto; white-space:nowrap; gap:9px; padding:9px 14px; border-radius:999px; font-size:13.5px}
+  .outline button:hover{transform:none}
+  .outline .dot{width:9px; height:9px}
+  .more-link{white-space:nowrap}
+  .kids, .kids.open{display:flex; gap:12px; overflow-x:auto; margin:-26px -16px 0; padding:4px 16px 8px; scroll-snap-type:x mandatory; scrollbar-width:none}
+  .kids::-webkit-scrollbar{display:none}
+  .node.kid{flex:0 0 72%; max-width:260px; opacity:1; transform:none; pointer-events:auto; scroll-snap-align:start}
+  .kc{display:none}
+  #skills .ph.phone{width:min(100%,240px)}
+  .hubcta{flex-wrap:wrap; gap:12px} .hubsoc{gap:6px} .hubsoc a{width:36px; height:36px}
 }
 </style>
 
