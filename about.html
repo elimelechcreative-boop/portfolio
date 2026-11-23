@@ -231,18 +231,18 @@ button{font:inherit; color:inherit}
 }
 
 /* ── about page ── */
-@media (min-width:901px){ .world{width:1560px; height:1440px} }
+@media (min-width:901px){ .world{width:1560px; height:1640px} }
 #profile{width:1520px; --c:var(--c-about)}
-#profile .pcols{display:grid; grid-template-columns:340px minmax(0,1fr); gap:48px; align-items:stretch}
-#profile .pcols > div:last-child{display:flex; flex-direction:column; padding:6px 24px 4px 0}
+#profile .pcols{display:grid; grid-template-columns:390px minmax(0,1fr); gap:64px; align-items:stretch}
+#profile .pcols > div:last-child{display:flex; flex-direction:column; padding:14px 40px 14px 0}
 #profile .ph{height:auto; aspect-ratio:4/5; margin:0}
 #profile .nh{color:var(--c-about); margin-bottom:0} #profile .nh .n{color:var(--c-about)}
-#profile h2{font-size:76px; font-weight:600; letter-spacing:-.04em; line-height:.95; margin:22px 0 18px}
+#profile h2{font-size:76px; font-weight:600; letter-spacing:-.04em; line-height:.95; margin:34px 0 26px}
 #profile .lead{color:var(--ink); font-size:24px; font-weight:450; letter-spacing:-.01em; max-width:780px; line-height:1.35; margin:0}
-#profile .pbody{display:grid; grid-template-columns:1fr 1fr; gap:40px; max-width:1040px; margin-top:auto; padding-top:24px; border-top:1px solid var(--line)}
-#profile .pbody p{margin:0; font-size:16px; line-height:1.6; color:var(--muted)}
-#profile .chips{margin-top:20px}
-#profile .cvbtn{display:inline-flex; align-items:center; gap:10px; align-self:flex-start; margin-top:22px; padding:15px 26px; border-radius:8px; background:color-mix(in srgb,var(--c-about) 82%,#0B1A5C); color:#fff; font-size:17px; font-weight:600; letter-spacing:-.005em; text-decoration:none; box-shadow:0 8px 22px -6px color-mix(in srgb,var(--c-about) 70%,transparent); transition:filter .2s, transform .2s, box-shadow .2s}
+#profile .pbody{display:grid; grid-template-columns:1fr 1fr; gap:56px; max-width:1040px; margin-top:auto; padding-top:32px; border-top:1px solid var(--line)}
+#profile .pbody p{margin:0; font-size:16px; line-height:1.75; color:var(--muted)}
+#profile .chips{margin-top:32px}
+#profile .cvbtn{display:inline-flex; align-items:center; gap:10px; align-self:flex-start; margin-top:30px; padding:15px 26px; border-radius:8px; background:color-mix(in srgb,var(--c-about) 82%,#0B1A5C); color:#fff; font-size:17px; font-weight:600; letter-spacing:-.005em; text-decoration:none; box-shadow:0 8px 22px -6px color-mix(in srgb,var(--c-about) 70%,transparent); transition:filter .2s, transform .2s, box-shadow .2s}
 #profile .cvbtn svg{width:18px; height:18px}
 #profile .cvbtn:hover{filter:brightness(1.1); transform:translateY(-2px); box-shadow:0 12px 28px -6px color-mix(in srgb,var(--c-about) 80%,transparent)}
 #exp{width:420px; --c:var(--c-work)}
@@ -274,8 +274,9 @@ button{font:inherit; color:inherit}
 .clist .copy:focus-visible{outline:2px solid var(--c); outline-offset:2px}
 @media (max-width:900px){
   #profile .pcols{grid-template-columns:minmax(0,1fr)}
-  #profile .pbody{grid-template-columns:minmax(0,1fr); gap:10px; margin-top:18px}
+  #profile .pbody{grid-template-columns:minmax(0,1fr); gap:14px; margin-top:24px}
   #profile .pcols > div:last-child{padding:0}
+  #profile h2{margin:24px 0 18px} #profile .chips{margin-top:24px} #profile .cvbtn{margin-top:24px}
   #profile h2{font-size:48px}
   #profile .lead{font-size:19px}
   #profile .ph{max-width:340px}
@@ -440,7 +441,7 @@ button{font:inherit; color:inherit}
 </div>
 
 <script>
-window.GRAPH={hub:'profile', pos:{profile:[30,50], exp:[30,640], toolkit:[490,680], edu:[920,680], recog:[1260,640], contact:[920,960], press:[1260,1080]}, from:{contact:'edu', press:'recog'}, order:['exp','toolkit','edu','recog','contact','press'], color:{press:'var(--c-press)',exp:'var(--c-work)',toolkit:'var(--c-proj)',edu:'var(--c-edu)',recog:'var(--c-skills)',contact:'var(--c-contact)'}};
+window.GRAPH={hub:'profile', pos:{profile:[30,50], exp:[30,740], toolkit:[490,780], edu:[920,780], recog:[1260,740], contact:[920,1060], press:[1260,1180]}, from:{contact:'edu', press:'recog'}, order:['exp','toolkit','edu','recog','contact','press'], color:{press:'var(--c-press)',exp:'var(--c-work)',toolkit:'var(--c-proj)',edu:'var(--c-edu)',recog:'var(--c-skills)',contact:'var(--c-contact)'}};
 </script>
 <script>
 (function(){
