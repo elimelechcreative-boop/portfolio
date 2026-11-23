@@ -235,10 +235,12 @@ button{font:inherit; color:inherit}
 #profile{width:1520px; --c:var(--c-about)}
 #profile .pcols{display:grid; grid-template-columns:390px minmax(0,1fr); gap:64px; align-items:stretch}
 #profile .pcols > div:last-child{display:flex; flex-direction:column; padding:14px 40px 14px 0}
-#profile .ph{height:auto; aspect-ratio:4/5; margin:0}
+#profile .ph{width:100%; height:auto; aspect-ratio:auto; min-height:488px; margin:0}
+#profile .ph img{width:100%; height:100%; object-fit:cover}
 #profile .nh{color:var(--c-about); margin-bottom:0} #profile .nh .n{color:var(--c-about)}
 #profile h2{font-size:76px; font-weight:600; letter-spacing:-.04em; line-height:.95; margin:34px 0 26px}
-#profile .lead{color:var(--ink); font-size:24px; font-weight:450; letter-spacing:-.01em; max-width:780px; line-height:1.35; margin:0}
+#profile .lead{color:var(--ink); font-size:24px; font-weight:450; letter-spacing:0; max-width:780px; line-height:1.5; margin:0 0 40px}
+#profile .pbody p{letter-spacing:.005em}
 #profile .pbody{display:grid; grid-template-columns:1fr 1fr; gap:56px; max-width:1040px; margin-top:auto; padding-top:32px; border-top:1px solid var(--line)}
 #profile .pbody p{margin:0; font-size:16px; line-height:1.75; color:var(--muted)}
 #profile .chips{margin-top:32px}
@@ -279,7 +281,7 @@ button{font:inherit; color:inherit}
   #profile h2{margin:24px 0 18px} #profile .chips{margin-top:24px} #profile .cvbtn{margin-top:24px}
   #profile h2{font-size:48px}
   #profile .lead{font-size:19px}
-  #profile .ph{max-width:340px}
+  #profile .ph{max-width:340px; aspect-ratio:4/5; min-height:0}
 }
 </style>
 
