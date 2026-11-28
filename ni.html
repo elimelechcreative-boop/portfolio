@@ -8,7 +8,15 @@ html.entering .feed::after{opacity:1; transition:none}
 /* the current page or node lights up in the outline */
 .outline button[aria-current="true"]{background:color-mix(in srgb,var(--c) 15%,var(--tile)); box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 50%,transparent)}
 .outline button[aria-current="true"] .dot{box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 28%,transparent), 0 0 12px 2px var(--c)}
-</style></head><body>
+</style>
+<style id="home-in">
+@keyframes pagesIn{from{max-height:0; margin-top:0; padding-top:0; padding-bottom:0; border-color:transparent; opacity:0} to{max-height:64px; opacity:1}}
+@keyframes homeUp{from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:none}}
+.who .pages{overflow:hidden; animation:pagesIn .7s cubic-bezier(.22,.9,.3,1) .2s both}
+.who .pages .home-link{animation:homeUp .6s cubic-bezier(.22,.9,.3,1) .45s both}
+@media (prefers-reduced-motion:reduce){.who .pages,.who .pages .home-link{animation:none}}
+</style>
+</head><body>
 <title>Natural Intelligence · Elimelech Adga</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
