@@ -653,8 +653,7 @@ window.GRAPH={hub:'about', pos:{about:[510,60], skills:[1126,740], work:[316,740
   canvas.addEventListener('pointerup',end); canvas.addEventListener('pointercancel',end);
 
   // sidebar outline: glide to a node and flash it
-  document.querySelectorAll('[data-go]').forEach(function(btn){
-    btn.addEventListener('click',function(){
+  function goFocus(btn){
       document.querySelectorAll('[data-go]').forEach(function(b){b.setAttribute('aria-current', b===btn?'true':'false')});
       var n=node(btn.dataset.go);
       if(flowMQ.matches){ n.scrollIntoView({behavior:still?'auto':'smooth', block:'start'}); }
@@ -668,7 +667,10 @@ window.GRAPH={hub:'about', pos:{about:[510,60], skills:[1126,740], work:[316,740
       n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash');
       clearTimeout(n._t); n._t=setTimeout(function(){n.classList.remove('flash')},1600);
       if(wires[n.id]){ wires[n.id].classList.add('hot'); setTimeout(function(){wires[n.id].classList.remove('hot')},1600) }
-    });
+  }
+  // sidebar buttons open their section's page (same dive as clicking the node)
+  document.querySelectorAll('[data-go]').forEach(function(btn){
+    btn.addEventListener('click',function(){ var n=node(btn.dataset.go); if(n && (n.querySelector('a[data-dive="'+n.id+'"]')||n.querySelector('a.arrow'))) kidGo(n); else goFocus(btn); });
   });
 
   function layout(){
@@ -741,7 +743,7 @@ window.GRAPH={hub:'about', pos:{about:[510,60], skills:[1126,740], work:[316,740
   }
   layout(); initView();
   var hk=location.hash.slice(1), hb=hk&&document.querySelector('[data-go="'+hk+'"]');
-  if(hb){ try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} setTimeout(function(){hb.click()},350); }
+  if(hb){ try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} setTimeout(function(){goFocus(hb)},350); }
   // page links ("More about me", the UGC arrow): the camera dives into their node and the zoom ends on the next page's canvas colour
   document.querySelectorAll('[data-dive]').forEach(function(a){
     var pf=document.createElement('link'); pf.rel='prefetch'; pf.href=a.getAttribute('href'); document.head.appendChild(pf);
